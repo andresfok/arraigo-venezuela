@@ -16,7 +16,7 @@ Sitio estático de una página. Tienda de Tote Marea, Termo Ávila y Sombrero Cr
 ## Cambiar datos (en `index.html`, bloque `CONFIG` y `PRODUCTS`)
 - WhatsApp, Instagram, métodos de pago y entrega: `CONFIG`.
 - Precios, colores, tallas, SKU y stock: `PRODUCTS`. `stock: 0` muestra "Agotado".
-- Canto del cristofué: `cristofueAudio` está en `null`. Actívalo solo con permiso escrito de la autora (XC1183815, Paola Facundo, CC BY-NC-SA 4.0) o con una grabación propia, y agrega el crédito.
+- Canto del cristofué: `media/cristofue.mp3`, grabación XC1183815 de Paola Facundo (xeno-canto), usada con su permiso para uso comercial. Guarda ese permiso por escrito. Para ocultar el botón, pon `cristofueAudio: null`.
 - Conexión futura con importador-venezuela: `ordersEndpoint` (POST del pedido) e `inventoryEndpoint` (stock por SKU).
 
 ## Después de publicar

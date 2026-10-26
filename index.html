@@ -666,6 +666,7 @@ form.checkout h4{margin:6px 0 0;font:600 12px/1 var(--f-body);letter-spacing:.16
       <div>
         <span class="eyebrow">¿Quién es el cristofué?</span>
         <p>Es uno de los pájaros más conocidos de Venezuela: pecho amarillo y antifaz negro y blanco. Lo ves parado en los cables de luz, en los patios y en la costa, y lo oyes desde temprano en la mañana. Por eso lo llevamos en el sombrero: es un sonido que todos reconocemos como de aquí.</p>
+        <small class="credit">Canto del cristofué: Paola Facundo, XC1183815, <a href="https://www.xeno-canto.org/1183815" target="_blank" rel="noopener">xeno-canto.org</a>. Usado con permiso.</small>
       </div>
     </div>
     <div class="wrap specs-wrap">
@@ -780,7 +781,7 @@ const CONFIG = {
   payments: ["Pago Móvil", "Zelle", "USDT (Binance)", "Efectivo USD"],
   shipping: ["Delivery La Guaira", "Delivery Caracas", "Retiro en Punta de Mulatos"],
   // Integración futura con importador-venezuela:
-  cristofueAudio: null,  // Para activar: sube media/cristofue.mp3 y escribe "media/cristofue.mp3". Grabación XC1183815 (Paola Facundo, CC BY-NC-SA 4.0): solo con su permiso escrito de uso comercial, y agrega el crédito.
+  cristofueAudio: "media/cristofue.mp3",  // Grabación XC1183815 de Paola Facundo (xeno-canto), usada con su permiso para uso comercial. null oculta el botón.
   ordersEndpoint: null,         // ej: "https://api.tudominio.com/orders"  (POST del pedido)
   inventoryEndpoint: null       // ej: "https://api.tudominio.com/inventory?brand=arraigo" (GET stock por SKU)
 };
