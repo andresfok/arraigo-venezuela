@@ -15,6 +15,7 @@ Sitio estático de una página. Tienda de Tote Marea, Termo Ávila y Sombrero Cr
 
 ## Cambiar datos (en `index.html`, bloque `CONFIG` y `PRODUCTS`)
 - WhatsApp, Instagram, métodos de pago y entrega: `CONFIG`.
+- Precios en bolívares: la página lee la tasa BCV de `https://andresfok.github.io/bcv-rate-pull/rate.json` (proyecto bcv-rate-pull, se actualiza cada noche). Si no carga o tiene más de `bcvMaxAgeDays` días, muestra los precios en USD a tasa BCV sin monto en Bs.
 - Precios, colores, tallas, SKU y stock: `PRODUCTS`. `stock: 0` muestra "Agotado".
 - Canto del cristofué: `media/cristofue.mp3`, grabación XC1183815 de Paola Facundo (xeno-canto), usada con su permiso para uso comercial. Guarda ese permiso por escrito. Para ocultar el botón, pon `cristofueAudio: null`.
 - Conexión futura con importador-venezuela: `ordersEndpoint` (POST del pedido) e `inventoryEndpoint` (stock por SKU).

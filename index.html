@@ -180,6 +180,7 @@ section{scroll-margin-top:80px}
 .band .pp small{color:var(--on-band-muted)}
 .pp.alt .price{font-size:16px;font-weight:700}
 .moment .price small{display:block;font:500 12.5px/1.3 var(--f-body);color:var(--muted);margin-top:4px}
+.bcv-line{margin:0;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .paynote{margin:-6px 0 0;font-size:12.5px;color:var(--muted)}
 .price.tbd{font:600 13.5px/1.3 var(--f-body);color:var(--muted)}
 .stock{font-size:12.5px;color:var(--muted)}
@@ -518,6 +519,7 @@ form.checkout h4{margin:6px 0 0;font:600 12px/1 var(--f-body);letter-spacing:.16
             <a class="btn btn-ink" href="#marea">Ver los productos</a>
             <a class="btn btn-ghost" href="#mayor">Comprar al mayor</a>
           </div>
+          <p class="bcv-line" data-bcv-line hidden></p>
         </div>
       </div>
       <div class="day-head">
@@ -787,6 +789,8 @@ const CONFIG = {
   currency: "USD",
   payments: ["Pago Móvil", "Zelle", "USDT (Binance)", "Efectivo USD"],
   bsPayments: ["Pago Móvil"],   // estos métodos usan el precio en bolívares (tasa BCV)
+  bcvRateUrl: "https://andresfok.github.io/bcv-rate-pull/rate.json",  // tasa BCV diaria (proyecto bcv-rate-pull)
+  bcvMaxAgeDays: 3,             // si la tasa tiene más días, no se muestran montos en Bs
   shipping: ["Delivery La Guaira", "Delivery Caracas", "Retiro en Punta de Mulatos"],
   // Integración futura con importador-venezuela:
   cristofueAudio: "media/cristofue.mp3",  // Grabación XC1183815 de Paola Facundo (xeno-canto), usada con su permiso para uso comercial. null oculta el botón.
@@ -842,10 +846,31 @@ const unitPriceBs = (p, z) => (z && z.priceBs != null) ? z.priceBs : p.priceBs;
 const isBsPay = pay => (CONFIG.bsPayments||[]).includes(pay);
 let payChoice = CONFIG.payments[0];
 const priceOf = (p, z, pay) => isBsPay(pay) ? unitPriceBs(p, z) : unitPrice(p, z);
+/* Tasa BCV del día (se carga al abrir la página; si falla, se muestran los precios en USD a tasa BCV) */
+let BCV = null; // { rate: Number, date: "AAAA-MM-DD" }
+const fmtBs = (n, dec=0) => "Bs " + n.toLocaleString("es-VE", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+const fmtDate = iso => { const [y,m,d] = iso.split("-"); return `${d}/${m}/${y}`; };
+const bcvLine = () => BCV ? `Tasa BCV: ${BCV.rate.toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2})} Bs/$ · ${fmtDate(BCV.date)}` : "";
+async function loadBcv(){
+  if(!CONFIG.bcvRateUrl) return;
+  try{
+    const r = await fetch(CONFIG.bcvRateUrl, { cache: "no-store" }); if(!r.ok) return;
+    const d = await r.json(); const rate = parseFloat(d.rate); const date = String(d.date_ve||"");
+    if(!(rate > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    const age = (Date.now() - Date.parse(date + "T00:00:00-04:00")) / 864e5;
+    if(age > CONFIG.bcvMaxAgeDays + 1) return;
+    BCV = { rate, date };
+    document.querySelectorAll("[data-bcv-line]").forEach(el => { el.textContent = bcvLine(); el.hidden = false; });
+    renderMarea(); renderJug(); renderHat(); renderDay(); renderCart();
+  }catch(e){}
+}
 function priceBlock(p, z){
   const d=unitPrice(p,z), b=unitPriceBs(p,z);
   if(d==null) return `<span class="price tbd">Precio al confirmar<br>por WhatsApp</span>`;
-  return `<span class="pp"><span class="price">${fmt(d)}</span><small>en divisas</small></span>${b!=null?`<span class="pp alt"><span class="price">${fmt(b)}</span><small>en bolívares, tasa BCV</small></span>`:""}`;
+  const bs = b==null ? "" : (BCV
+    ? `<span class="pp alt"><span class="price">${fmtBs(b*BCV.rate)}</span><small>en bolívares · ${fmt(b)} a tasa BCV</small></span>`
+    : `<span class="pp alt"><span class="price">${fmt(b)}</span><small>en bolívares, tasa BCV</small></span>`);
+  return `<span class="pp"><span class="price">${fmt(d)}</span><small>en divisas</small></span>${bs}`;
 }
 const skuOf = (v, z) => z ? `${v.sku}-${z.code}` : v.sku;
 const dimsTxt = z => z && z.dims ? `${z.dims.join(" × ")} cm` : "";
@@ -961,7 +986,8 @@ function renderDay(){
     const d=zs.map(z=>unitPrice(p,z)).filter(x=>x!=null), b=zs.map(z=>unitPriceBs(p,z)).filter(x=>x!=null);
     if(!d.length){ el.textContent=""; return; }
     const from=(p.sizes&&d.length>1)?"Desde ":"";
-    el.innerHTML=`${from}${fmt(Math.min(...d))}<small>${b.length?`${fmt(Math.min(...b))} en Bs (BCV)`:""}</small>`;
+    const mb=b.length?Math.min(...b):null;
+    el.innerHTML=`${from}${fmt(Math.min(...d))}<small>${mb==null?"":(BCV?`${from}${fmtBs(mb*BCV.rate)} en bolívares`:`${fmt(mb)} en Bs (BCV)`)}</small>`;
   });
 }
 
@@ -990,6 +1016,8 @@ function renderCart(){
     return;
   }
   const allPriced = L.every(l=>l.price!=null);
+  const inBs = isBsPay(payChoice) && !!BCV;
+  const money = n => inBs ? fmtBs(n*BCV.rate, 2) : fmt(n);
   const total = L.reduce((a,l)=>a+(l.price||0)*l.qty,0);
   const keep = readForm();
   if(keep) keep.pay = payChoice;
@@ -998,10 +1026,10 @@ function renderCart(){
       <img src="${l.v.img}" alt="">
       <div><b>${l.p.name.join(" ")}</b><small>${l.label} · ${l.sku}</small><br>
         <span class="qty"><button aria-label="Quitar uno" data-q="${ix}:-1">−</button><span>${l.qty}</span><button aria-label="Agregar uno" data-q="${ix}:1">+</button></span></div>
-      <div><div class="lp">${l.price!=null?fmt(l.price*l.qty):"—"}</div><button class="rm" data-rm="${ix}">Quitar</button></div>
+      <div><div class="lp">${l.price!=null?money(l.price*l.qty):"—"}</div><button class="rm" data-rm="${ix}">Quitar</button></div>
     </div>`).join("") + `
-    <div class="totals"><span>Subtotal <small>· ${count()} ${count()===1?"artículo":"artículos"}</small></span>${allPriced?`<b>${fmt(total)}</b>`:`<small>Se confirma por WhatsApp</small>`}</div>
-    <p class="paynote">${isBsPay(payChoice)?`Precio en bolívares: pagas el equivalente en Bs a la tasa BCV del día. Pagando en divisas el total es menor.`:`Precio en divisas (efectivo, Zelle o USDT).`} Precios con IVA incluido. Al mayor: te enviamos los precios por WhatsApp.</p>
+    <div class="totals"><span>Subtotal <small>· ${count()} ${count()===1?"artículo":"artículos"}</small></span>${allPriced?`<b>${money(total)}</b>`:`<small>Se confirma por WhatsApp</small>`}</div>
+    <p class="paynote">${isBsPay(payChoice)?(inBs?`Total en bolívares (${fmt(total)} a tasa BCV). ${bcvLine()}. El monto final se ajusta a la tasa BCV del día del pago. Pagando en divisas el total es menor.`:`Precio en bolívares: pagas el equivalente en Bs a la tasa BCV del día. Pagando en divisas el total es menor.`):`Precio en divisas (efectivo, Zelle o USDT).`} Precios con IVA incluido. Al mayor: te enviamos los precios por WhatsApp.</p>
     <form class="checkout" id="checkout" novalidate>
       <h4>Tus datos</h4>
       <div class="field"><label for="f-name">Nombre y apellido</label><input id="f-name" name="name" autocomplete="name" required></div>
@@ -1046,12 +1074,15 @@ function buildOrder(){
     items: L.map(l=>({ sku:l.sku, product:l.p.name.join(" "), color:l.v.name, size:l.z?l.z.name:null, qty:l.qty, unitPrice:l.price })),
     currency: CONFIG.currency,
     priceList: isBsPay(d.pay) ? "bolivares_bcv" : "divisas",
+    bcvRate: BCV ? BCV.rate : null, bcvDate: BCV ? BCV.date : null,
     subtotal: L.every(l=>l.price!=null) ? L.reduce((a,l)=>a+l.price*l.qty,0) : null
   };
 }
 function orderText(o){
-  const items = o.items.map(i=>`• ${i.qty} × ${i.product} — ${i.color}${i.size?` (${i.size})`:""}${i.unitPrice!=null?` (${fmt(i.unitPrice*i.qty)})`:""}`).join("\n");
-  return `¡Hola Arraigo! Quiero hacer este pedido${o.type==="mayor"?" al mayor":""}:\n\n${items}\n\n${o.type==="mayor"?`Precio al mayor: por favor envíenme la lista.\n`:(o.subtotal!=null?`Subtotal ${o.priceList==="divisas"?"en divisas":"en Bs a tasa BCV"}: ${fmt(o.subtotal)}\n`:"")}Nombre: ${o.customer.name}\nTeléfono: ${o.customer.phone}\nZona: ${o.customer.city}\nEntrega: ${o.shipping}\nPago: ${o.payment}${o.notes?`\nNota: ${o.notes}`:""}\n\nPedido ${o.id}`;
+  const bsMsg = o.priceList==="bolivares_bcv" && o.bcvRate;
+  const m = n => bsMsg ? fmtBs(n*o.bcvRate, 2) : fmt(n);
+  const items = o.items.map(i=>`• ${i.qty} × ${i.product} — ${i.color}${i.size?` (${i.size})`:""}${i.unitPrice!=null?` (${m(i.unitPrice*i.qty)})`:""}`).join("\n");
+  return `¡Hola Arraigo! Quiero hacer este pedido${o.type==="mayor"?" al mayor":""}:\n\n${items}\n\n${o.type==="mayor"?`Precio al mayor: por favor envíenme la lista.\n`:(o.subtotal!=null?(bsMsg?`Subtotal en bolívares: ${m(o.subtotal)} (${fmt(o.subtotal)} a tasa BCV ${o.bcvRate.toLocaleString("es-VE",{minimumFractionDigits:2,maximumFractionDigits:2})} del ${fmtDate(o.bcvDate)}). Monto a confirmar con la tasa del día del pago.\n`:`Subtotal ${o.priceList==="divisas"?"en divisas":"en Bs a tasa BCV"}: ${fmt(o.subtotal)}\n`):"")}Nombre: ${o.customer.name}\nTeléfono: ${o.customer.phone}\nZona: ${o.customer.city}\nEntrega: ${o.shipping}\nPago: ${o.payment}${o.notes?`\nNota: ${o.notes}`:""}\n\nPedido ${o.id}`;
 }
 function validate(){
   const d=readForm(); const miss=[];
@@ -1115,7 +1146,7 @@ $("#mayorLink").href = waLink("¡Hola Arraigo! Me interesa comprar al mayor. ¿M
 $("#yr").textContent = new Date().getFullYear();
 $("#rif").textContent = CONFIG.rif;
 
-renderGrid(); renderMarea(); renderJug(); renderHat(); renderDay(); renderSizeBar(); renderCart(); loadInventory();
+renderGrid(); renderMarea(); renderJug(); renderHat(); renderDay(); renderSizeBar(); renderCart(); loadInventory(); loadBcv();
 </script>
 
 <!-- Datos estructurados (Google) -->
