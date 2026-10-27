@@ -13,10 +13,18 @@ Sitio estático de una página. Tienda de Tote Marea, Termo Ávila y Sombrero Cr
 - Registro **CNAME** con nombre `www` y valor `andresfok.github.io`.
 - Espera de minutos a unas horas. `arraigo-venezuela.com` redirigirá solo a `www.arraigo-venezuela.com`.
 
-## Cambiar datos (en `index.html`, bloque `CONFIG` y `PRODUCTS`)
+## Estructura
+- `index.html` (inicio) y una página por producto: `tote-marea/`, `termo-avila/`, `sombrero-cristofue/`.
+- Estas páginas **se generan**: no las edites a mano. Edita las piezas y vuelve a generar:
+  - Textos y secciones: `tools/src/*.html` (encabezado, pie, hero, cada producto, preguntas frecuentes `faq_*.html`).
+  - Estilos: `assets/site.css`. Código, precios y productos: `assets/site.js`.
+  - Título, descripción para Google y datos estructurados de cada producto: `PAGES` en `tools/build.py`.
+  - Generar: `python3 tools/build.py` (desde la raíz del repo) y sube los cambios.
+
+## Cambiar datos (en `assets/site.js`, bloque `CONFIG` y `PRODUCTS`)
 - WhatsApp, Instagram, métodos de pago y entrega: `CONFIG`.
 - Precios en bolívares: la página lee la tasa BCV de `https://andresfok.github.io/bcv-rate-pull/rate.json` (proyecto bcv-rate-pull, se actualiza cada noche). Si no carga o tiene más de `bcvMaxAgeDays` días, muestra los precios en USD a tasa BCV sin monto en Bs.
-- Precios, colores, tallas, SKU y stock: `PRODUCTS`. `stock: 0` muestra "Agotado".
+- Precios, colores, tallas, SKU y stock: `PRODUCTS`. `stock: 0` muestra "Agotado". Si cambias un precio, actualízalo también en `PAGES` (`tools/build.py`) y vuelve a generar.
 - Canto del cristofué: `media/cristofue.mp3`, grabación XC1183815 de Paola Facundo (xeno-canto), usada con su permiso para uso comercial. Guarda ese permiso por escrito. Para ocultar el botón, pon `cristofueAudio: null`.
 - Conexión futura con importador-venezuela: `ordersEndpoint` (POST del pedido) e `inventoryEndpoint` (stock por SKU).
 
