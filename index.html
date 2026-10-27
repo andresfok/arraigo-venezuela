@@ -174,6 +174,13 @@ section{scroll-margin-top:80px}
 .sw-name{font-size:13.5px;font-weight:600;margin-left:4px}
 .buy{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:14px;border-top:1px solid var(--line);margin-top:auto}
 .price{font:800 22px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.prices{display:grid;gap:6px}
+.pp{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pp small{font-size:12px;color:var(--muted)}
+.band .pp small{color:var(--on-band-muted)}
+.pp.alt .price{font-size:16px;font-weight:700}
+.moment .price small{display:block;font:500 12.5px/1.3 var(--f-body);color:var(--muted);margin-top:4px}
+.paynote{margin:-6px 0 0;font-size:12.5px;color:var(--muted)}
 .price.tbd{font:600 13.5px/1.3 var(--f-body);color:var(--muted)}
 .stock{font-size:12.5px;color:var(--muted)}
 .stock.out{color:var(--coral);font-weight:700}
@@ -738,7 +745,7 @@ form.checkout h4{margin:6px 0 0;font:600 12px/1 var(--f-body);letter-spacing:.16
       <div>
         <details><summary>¿Dónde entregan?</summary><p>Por ahora hacemos delivery en La Guaira y en Caracas. También puedes retirar tu pedido en Punta de Mulatos, La Guaira. El costo del delivery depende de la zona y te lo confirmamos por WhatsApp antes de pagar. Pronto llegaremos a más ciudades.</p></details>
         <details><summary>¿Cómo sé si hay disponibilidad?</summary><p>Cuando envías tu pedido por WhatsApp revisamos el inventario y te confirmamos al momento. Si un color se agota, te ofrecemos otro o te avisamos cuando llegue.</p></details>
-        <details><summary>¿Qué métodos de pago aceptan?</summary><p>Pago Móvil, Zelle, USDT (Binance) y efectivo en dólares. Los precios están en dólares de referencia.</p></details>
+        <details><summary>¿Qué métodos de pago aceptan?</summary><p>Pago Móvil, Zelle, USDT (Binance) y efectivo en dólares. Cada producto tiene dos precios, ambos con IVA: el precio en divisas, si pagas en efectivo, Zelle o USDT, y el precio en bolívares, que pagas por Pago Móvil al equivalente de la tasa BCV del día.</p></details>
         <details><summary>¿Qué tamaño me conviene?</summary><p>El grande mide 48 × 34 × 23 cm (ancho × alto × fondo): le cabe una laptop de 15", el mercado de la semana o todo lo de un día de playa. El mediano mide 38 × 31 × 13 cm: le cabe una laptop de 13", un cuaderno y tu termo, ideal para clases, la oficina o hacer diligencias en el banco. Si tienes dudas, escríbenos y te mandamos fotos con cosas adentro para que compares.</p></details>
         <details><summary>¿Por qué el Tote Marea es más pesado que otros?</summary><p>Porque lleva más material. El grande pesa 1,3 kg y el mediano 820 g, más que la mayoría de los bolsos de este tipo del mismo tamaño. Eso se traduce en paredes más gruesas, un bolso que mantiene su forma y un acabado más suave.</p></details>
         <details><summary>¿De qué material es el Tote Marea? ¿Sirve como bolso de playa?</summary><p>El Tote Marea está hecho de EVA, un material liviano, flexible y resistente al agua. Por eso funciona muy bien como bolso de playa: la arena y el agua salen con un enjuague. Y como no se ve como un bolso de playa, también lo usas en la ciudad, en la oficina o en el mercado.</p></details>
@@ -779,6 +786,7 @@ const CONFIG = {
   rif: "J-508703294",
   currency: "USD",
   payments: ["Pago Móvil", "Zelle", "USDT (Binance)", "Efectivo USD"],
+  bsPayments: ["Pago Móvil"],   // estos métodos usan el precio en bolívares (tasa BCV)
   shipping: ["Delivery La Guaira", "Delivery Caracas", "Retiro en Punta de Mulatos"],
   // Integración futura con importador-venezuela:
   cristofueAudio: "media/cristofue.mp3",  // Grabación XC1183815 de Paola Facundo (xeno-canto), usada con su permiso para uso comercial. null oculta el botón.
@@ -786,15 +794,16 @@ const CONFIG = {
   inventoryEndpoint: null       // ej: "https://api.tudominio.com/inventory?brand=arraigo" (GET stock por SKU)
 };
 
-/* price: null = aún sin precio publicado (se confirma por WhatsApp)
+/* price = precio en divisas (efectivo, Zelle, USDT). priceBs = precio en bolívares, en USD a tasa BCV del día. Ambos con IVA.
+   price: null = aún sin precio publicado (se confirma por WhatsApp)
    stock: null = no se muestra · 0 = agotado · n = unidades disponibles */
 const PRODUCTS = [
   { id:"tote-marea", name:["Tote","Marea"], kind:"Tote Marea", line:"El bolso que agarras sin pensarlo: le cabe todo, se para solo y se lava con agua.", price:null,
     /* Tamaños: precio y peso por tamaño. Para vender el pequeño (450 g), quita las // de su línea. */
     sizes:[
       /* dims: ancho × alto × fondo en cm */
-      { id:"grande",  code:"G", name:"Grande",  weight:1300, dims:[48,34,23], fits:"Cabe una laptop de 15\", el mercado de la semana o todo lo de un día de playa.", price:30 },
-      { id:"mediano", code:"M", name:"Mediano", weight:820,  dims:[38,31,13], fits:"Cabe una laptop de 13\", un cuaderno y tu termo. Ideal para clases, la oficina o hacer diligencias en el banco.", price:25 },
+      { id:"grande",  code:"G", name:"Grande",  weight:1300, dims:[48,34,23], fits:"Cabe una laptop de 15\", el mercado de la semana o todo lo de un día de playa.", price:33, priceBs:40 },
+      { id:"mediano", code:"M", name:"Mediano", weight:820,  dims:[38,31,13], fits:"Cabe una laptop de 13\", un cuaderno y tu termo. Ideal para clases, la oficina o hacer diligencias en el banco.", price:28, priceBs:35 },
       // { id:"pequeno", code:"P", name:"Pequeño", weight:450, dims:[28,21,11], fits:"Para lo básico: cartera, teléfono, llaves y lentes.", price:null },
     ],
     variants:[
@@ -802,11 +811,11 @@ const PRODUCTS = [
       { id:"coral",       sku:"ARR-MAREA-CO", name:"Coral",       hex:"#EF5A49", img:"img2/p-coral.webp", note:"Las flores de la costa", stock:null },
       { id:"cielo",       sku:"ARR-MAREA-CI", name:"Cielo",       hex:"#2D9CEA", img:"img2/p-cielo.webp", note:"La mañana antes del sol", stock:null }
     ]},
-  { id:"hydro-jug", name:["Termo","Ávila"], kind:"Con asa · 890 ml", line:"Para el que sale temprano y vuelve tarde. Lo cuelgas de la mano y te acompaña todo el día.", price:18,
+  { id:"hydro-jug", name:["Termo","Ávila"], kind:"Con asa · 890 ml", line:"Para el que sale temprano y vuelve tarde. Lo cuelgas de la mano y te acompaña todo el día.", price:19, priceBs:23,
     variants:[ { id:"avila", sku:"ARR-TERMO-AV", name:"Ávila", hex:"#2F4A3F", img:"img2/p-jug.webp", note:"El mediodía en la montaña", stock:null } ],
     /* Colección "Un día en la montaña": colores que vienen. Al llegar, muévelos a variants con su foto y SKU. */
     soon:[ { name:"Neblina", hex:"#7D8896" }, { name:"Atardecer", hex:"#C8643C" }, { name:"Anochecer", hex:"#1F2B57" } ]},
-  { id:"tropical-wings", name:["Sombrero","Cristofué"], kind:"Tejido natural · Ala ancha", line:"Sombra de verdad para los días de sol fuerte, con el cristofué escondido bajo el ala.", price:20,
+  { id:"tropical-wings", name:["Sombrero","Cristofué"], kind:"Tejido natural · Ala ancha", line:"Sombra de verdad para los días de sol fuerte, con el cristofué escondido bajo el ala.", price:23, priceBs:28,
     variants:[ { id:"cristofue", sku:"ARR-SOMB-CR", name:"Tejido natural", hex:"#C9A46A", img:"img2/p-hat.webp", note:"Con parche bordado y estampado bajo el ala", stock:null } ]}
 ];
 
@@ -829,6 +838,15 @@ const selected = {}; PRODUCTS.forEach(p => selected[p.id] = p.variants[0].id);
 const selSize = {}; PRODUCTS.forEach(p => { if (p.sizes) selSize[p.id] = p.sizes[0].id; });
 const findS = (p, sid) => p.sizes ? (p.sizes.find(z => z.id === sid) || p.sizes[0]) : null;
 const unitPrice = (p, z) => (z && z.price != null) ? z.price : p.price;
+const unitPriceBs = (p, z) => (z && z.priceBs != null) ? z.priceBs : p.priceBs;
+const isBsPay = pay => (CONFIG.bsPayments||[]).includes(pay);
+let payChoice = CONFIG.payments[0];
+const priceOf = (p, z, pay) => isBsPay(pay) ? unitPriceBs(p, z) : unitPrice(p, z);
+function priceBlock(p, z){
+  const d=unitPrice(p,z), b=unitPriceBs(p,z);
+  if(d==null) return `<span class="price tbd">Precio al confirmar<br>por WhatsApp</span>`;
+  return `<span class="pp"><span class="price">${fmt(d)}</span><small>en divisas</small></span>${b!=null?`<span class="pp alt"><span class="price">${fmt(b)}</span><small>en bolívares, tasa BCV</small></span>`:""}`;
+}
 const skuOf = (v, z) => z ? `${v.sku}-${z.code}` : v.sku;
 const dimsTxt = z => z && z.dims ? `${z.dims.join(" × ")} cm` : "";
 const kg = g => (g/1000).toLocaleString("es-VE",{minimumFractionDigits:g%1000?2:0,maximumFractionDigits:2}).replace(/0$/,"") + " kg";
@@ -860,7 +878,7 @@ function renderGrid(){
         ${sw}
         ${sizes}
         <div class="buy">
-          <div style="display:grid;gap:4px">${price!=null?`<span class="price">${fmt(price)}</span>`:`<span class="price tbd">Precio al confirmar<br>por WhatsApp</span>`}${stockLabel(v)}</div>
+          <div class="prices">${priceBlock(p,z)}${stockLabel(v)}</div>
           <button class="btn btn-ink" data-add="${p.id}:${v.id}" ${out?"disabled":""}>${out?"Agotado":"Agregar"}</button>
         </div>
       </div></article>`;
@@ -877,7 +895,7 @@ function renderMarea(){
     <div class="pk-row"><span>Color</span><div class="pk-colors" role="group" aria-label="Color">${p.variants.map(x=>`<button class="sw" style="--c:${x.hex}" aria-label="${x.name}" aria-pressed="${x.id===v.id}" data-sw="${p.id}:${x.id}"></button>`).join("")}</div></div>
     <div class="pk-row"><span>Tamaño</span><div class="sizes" role="group" aria-label="Tamaño">${p.sizes.map(x=>`<button class="sz" aria-pressed="${x.id===z.id}" data-sz="${p.id}:${x.id}">${x.name}<small>${dimsTxt(x)}</small><small>${x.weight.toLocaleString("es-VE")} g</small></button>`).join("")}</div>
       <p class="pk-fit"><b>${z.name}: ${dimsTxt(z)}</b> <span>(ancho × alto × fondo)</span><br>${z.fits}</p></div>
-    <div class="pk-buy"><div style="display:grid;gap:4px">${price!=null?`<span class="price">${fmt(price)}</span>`:`<span class="price tbd">Precio al confirmar<br>por WhatsApp</span>`}${stockLabel(v)}</div>
+    <div class="pk-buy"><div class="prices">${priceBlock(p,z)}${stockLabel(v)}</div>
       <button class="btn btn-sun" data-add="${p.id}:${v.id}" ${out?"disabled":""}>${out?"Agotado":"Agregar al carrito"}</button></div>`;
 }
 
@@ -903,7 +921,7 @@ function renderJug(){
     <div class="pk-row"><span>Color</span><div class="pk-colors" role="group" aria-label="Color">${p.variants.map(x=>`<button class="sw" style="--c:${x.hex}" aria-label="${x.name}" aria-pressed="true"></button>`).join("")}</div>
       <div class="pk-soon"><span>Próximamente</span>${(p.soon||[]).map(x=>`<a href="${waLink(`¡Hola Arraigo! Avísenme cuando llegue el Termo Ávila color ${x.name}.`)}" target="_blank" rel="noopener"><i style="--c:${x.hex}"></i>${x.name}<small>Avísame</small></a>`).join("")}</div></div>
     <div class="pk-row"><span>Capacidad</span><p class="pk-capt">890 ml <small>· 30 oz</small></p></div>
-    <div class="pk-buy"><div style="display:grid;gap:4px">${p.price!=null?`<span class="price">${fmt(p.price)}</span>`:`<span class="price tbd">Precio al confirmar<br>por WhatsApp</span>`}${stockLabel(v)}</div>
+    <div class="pk-buy"><div class="prices">${priceBlock(p,null)}${stockLabel(v)}</div>
       <button class="btn btn-sun" data-add="${p.id}:${v.id}" ${out?"disabled":""}>${out?"Agotado":"Agregar al carrito"}</button></div>`;
 }
 /* Unboxing video: plays only while visible, never with reduced motion */
@@ -924,7 +942,7 @@ function renderHat(){
     <div class="pk-name"><b>${v.name}</b><small>${v.note}</small></div>
     <div class="pk-row"><span>Talla</span><p class="pk-capt">Única <small>· 56–58 cm</small></p>
       <p class="pk-fit">¿Te queda? Mide con una cinta métrica alrededor de la cabeza, justo encima de las cejas y las orejas. Si da entre 56 y 58 cm, es tu talla.</p></div>
-    <div class="pk-buy"><div style="display:grid;gap:4px">${p.price!=null?`<span class="price">${fmt(p.price)}</span>`:`<span class="price tbd">Precio al confirmar<br>por WhatsApp</span>`}${stockLabel(v)}</div>
+    <div class="pk-buy"><div class="prices">${priceBlock(p,null)}${stockLabel(v)}</div>
       <button class="btn btn-sun" data-add="${p.id}:${v.id}" ${out?"disabled":""}>${out?"Agotado":"Agregar al carrito"}</button></div>`;
 }
 /* Canto del cristofué: el botón aparece solo cuando CONFIG.cristofueAudio tiene un archivo */
@@ -939,9 +957,11 @@ function renderHat(){
 function renderDay(){
   document.querySelectorAll("[data-from]").forEach(el=>{
     const p=findP(el.dataset.from); if(!p) return;
-    const prices=p.sizes ? p.sizes.map(z=>unitPrice(p,z)).filter(x=>x!=null) : (p.price!=null?[p.price]:[]);
-    if(!prices.length){ el.textContent=""; return; }
-    const min=Math.min(...prices); el.textContent=(p.sizes&&prices.length>1?"Desde ":"")+fmt(min);
+    const zs=p.sizes||[null];
+    const d=zs.map(z=>unitPrice(p,z)).filter(x=>x!=null), b=zs.map(z=>unitPriceBs(p,z)).filter(x=>x!=null);
+    if(!d.length){ el.textContent=""; return; }
+    const from=(p.sizes&&d.length>1)?"Desde ":"";
+    el.innerHTML=`${from}${fmt(Math.min(...d))}<small>${b.length?`${fmt(Math.min(...b))} en Bs (BCV)`:""}</small>`;
   });
 }
 
@@ -957,7 +977,7 @@ function add(pid, vid, qty=1){
 }
 
 function lines(){
-  return cart.map(i=>{ const p=findP(i.pid), v=p&&findV(p,i.vid); if(!p||!v) return null; const z=findS(p,i.sid); return {...i,p,v,z,price:unitPrice(p,z),sku:skuOf(v,z),label:v.name+(z?` · ${z.name} (${dimsTxt(z)})`:"")}; }).filter(Boolean);
+  return cart.map(i=>{ const p=findP(i.pid), v=p&&findV(p,i.vid); if(!p||!v) return null; const z=findS(p,i.sid); return {...i,p,v,z,price:priceOf(p,z,payChoice),sku:skuOf(v,z),label:v.name+(z?` · ${z.name} (${dimsTxt(z)})`:"")}; }).filter(Boolean);
 }
 
 function renderCart(){
@@ -972,6 +992,7 @@ function renderCart(){
   const allPriced = L.every(l=>l.price!=null);
   const total = L.reduce((a,l)=>a+(l.price||0)*l.qty,0);
   const keep = readForm();
+  if(keep) keep.pay = payChoice;
   $("#cartBody").innerHTML = L.map((l,ix)=>`
     <div class="item">
       <img src="${l.v.img}" alt="">
@@ -980,6 +1001,7 @@ function renderCart(){
       <div><div class="lp">${l.price!=null?fmt(l.price*l.qty):"—"}</div><button class="rm" data-rm="${ix}">Quitar</button></div>
     </div>`).join("") + `
     <div class="totals"><span>Subtotal <small>· ${count()} ${count()===1?"artículo":"artículos"}</small></span>${allPriced?`<b>${fmt(total)}</b>`:`<small>Se confirma por WhatsApp</small>`}</div>
+    <p class="paynote">${isBsPay(payChoice)?`Precio en bolívares: pagas el equivalente en Bs a la tasa BCV del día. Pagando en divisas el total es menor.`:`Precio en divisas (efectivo, Zelle o USDT).`} Precios con IVA incluido. Al mayor: te enviamos los precios por WhatsApp.</p>
     <form class="checkout" id="checkout" novalidate>
       <h4>Tus datos</h4>
       <div class="field"><label for="f-name">Nombre y apellido</label><input id="f-name" name="name" autocomplete="name" required></div>
@@ -995,6 +1017,7 @@ function renderCart(){
       <label class="check"><input type="checkbox" id="f-mayor" name="mayor"> Es una compra al mayor</label>
     </form>`;
   writeForm(keep);
+  if(!keep && $("#checkout")) $("#checkout").pay.value = payChoice;
   $("#cartFoot").innerHTML = `
     <div class="err" id="err"></div>
     <a class="btn btn-sun" id="sendWa" href="#" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
@@ -1022,12 +1045,13 @@ function buildOrder(){
     shipping:d.ship, payment:d.pay, notes:d.notes || "",
     items: L.map(l=>({ sku:l.sku, product:l.p.name.join(" "), color:l.v.name, size:l.z?l.z.name:null, qty:l.qty, unitPrice:l.price })),
     currency: CONFIG.currency,
+    priceList: isBsPay(d.pay) ? "bolivares_bcv" : "divisas",
     subtotal: L.every(l=>l.price!=null) ? L.reduce((a,l)=>a+l.price*l.qty,0) : null
   };
 }
 function orderText(o){
   const items = o.items.map(i=>`• ${i.qty} × ${i.product} — ${i.color}${i.size?` (${i.size})`:""}${i.unitPrice!=null?` (${fmt(i.unitPrice*i.qty)})`:""}`).join("\n");
-  return `¡Hola Arraigo! Quiero hacer este pedido${o.type==="mayor"?" al mayor":""}:\n\n${items}\n\n${o.subtotal!=null?`Subtotal: ${fmt(o.subtotal)}\n`:""}Nombre: ${o.customer.name}\nTeléfono: ${o.customer.phone}\nZona: ${o.customer.city}\nEntrega: ${o.shipping}\nPago: ${o.payment}${o.notes?`\nNota: ${o.notes}`:""}\n\nPedido ${o.id}`;
+  return `¡Hola Arraigo! Quiero hacer este pedido${o.type==="mayor"?" al mayor":""}:\n\n${items}\n\n${o.type==="mayor"?`Precio al mayor: por favor envíenme la lista.\n`:(o.subtotal!=null?`Subtotal ${o.priceList==="divisas"?"en divisas":"en Bs a tasa BCV"}: ${fmt(o.subtotal)}\n`:"")}Nombre: ${o.customer.name}\nTeléfono: ${o.customer.phone}\nZona: ${o.customer.city}\nEntrega: ${o.shipping}\nPago: ${o.payment}${o.notes?`\nNota: ${o.notes}`:""}\n\nPedido ${o.id}`;
 }
 function validate(){
   const d=readForm(); const miss=[];
@@ -1039,6 +1063,7 @@ function wireCheckout(){
   const refresh=()=>{ const o=buildOrder(); a.href=waLink(orderText(o)); };
   $("#checkout").addEventListener("input",()=>{ err.textContent=""; refresh(); });
   $("#checkout").addEventListener("submit",e=>e.preventDefault());
+  $("#f-pay").addEventListener("change",e=>{ payChoice=e.target.value; renderCart(); });
   refresh();
   a.addEventListener("click",e=>{
     const miss=validate();
@@ -1120,8 +1145,8 @@ renderGrid(); renderMarea(); renderJug(); renderHat(); renderDay(); renderSizeBa
       "brand": {"@id": "https://www.arraigo-venezuela.com/#arraigo"},
       "color": "Verde Palma, Coral, Cielo",
       "offers": [
-        {"@type": "Offer", "name": "Tote Marea Grande", "sku": "ARR-MAREA-G", "price": "30.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "seller": {"@id": "https://www.arraigo-venezuela.com/#arraigo"}},
-        {"@type": "Offer", "name": "Tote Marea Mediano", "sku": "ARR-MAREA-M", "price": "25.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "seller": {"@id": "https://www.arraigo-venezuela.com/#arraigo"}}
+        {"@type": "Offer", "name": "Tote Marea Grande", "sku": "ARR-MAREA-G", "price": "33.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "seller": {"@id": "https://www.arraigo-venezuela.com/#arraigo"}},
+        {"@type": "Offer", "name": "Tote Marea Mediano", "sku": "ARR-MAREA-M", "price": "28.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "seller": {"@id": "https://www.arraigo-venezuela.com/#arraigo"}}
       ]
     },
     {
@@ -1133,7 +1158,7 @@ renderGrid(); renderMarea(); renderJug(); renderHat(); renderDay(); renderSizeBa
       "sku": "ARR-TERMO-AV",
       "color": "Ávila",
       "material": "Acero inoxidable 304",
-      "offers": {"@type": "Offer", "price": "18.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "seller": {"@id": "https://www.arraigo-venezuela.com/#arraigo"}}
+      "offers": {"@type": "Offer", "price": "19.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "seller": {"@id": "https://www.arraigo-venezuela.com/#arraigo"}}
     },
     {
       "@type": "Product",
@@ -1144,7 +1169,7 @@ renderGrid(); renderMarea(); renderJug(); renderHat(); renderDay(); renderSizeBa
       "sku": "ARR-SOMB-CR",
       "material": "Fibra natural tejida",
       "size": "56–58 cm",
-      "offers": {"@type": "Offer", "price": "20.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "seller": {"@id": "https://www.arraigo-venezuela.com/#arraigo"}}
+      "offers": {"@type": "Offer", "price": "23.00", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "seller": {"@id": "https://www.arraigo-venezuela.com/#arraigo"}}
     }
   ]
 }
